@@ -1,0 +1,25 @@
+---
+  - name: Create user
+    user:
+      name: "{{ item.username }}"
+      groups: "{{ item.groups }}"
+      state: present
+      createhome: yes
+      shell: /bin/bash
+      home: "/home/{{ item.username }}"
+      skeleton: "/etc/skel"
+      append: yes
+    with_items: "{{ users }}"
+
+  - name: Add ssh keys
+    authorized_key:
+      user: "{{ item.username }}"
+      key: "{{ lookup('file', '../templates/keys/' + item.username + '.key.pub') }}"
+    with_items: "{{ users }}"
+
+  - name: Allow users to sudo
+    lineinfile:
+      dest: "/etc/sudoers"
+      state: present
+      regexp: "^%sudo"
+      line: "%sudo ALL=(ALL) NOPASSWD: ALL"

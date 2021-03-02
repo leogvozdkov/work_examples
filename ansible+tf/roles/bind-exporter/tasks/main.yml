@@ -1,0 +1,49 @@
+---
+  - name: Gather facts about service
+    service_facts:
+
+  - name: Set bind exporter service state var
+    debug:
+      var: ansible_facts.services["bind_exporter.service"]["status"]
+
+  - name: Download and extract archive
+    unarchive:
+      src: https://github.com/prometheus-community/bind_exporter/releases/download/v0.3.0/bind_exporter-0.3.0.linux-amd64.tar.gz
+      dest: /root
+      remote_src: yes
+    when: ansible_facts.services["bind_exporter.service"] is not defined
+
+  - name: Copy binary
+    copy:
+      src: /root/bind_exporter-0.3.0.linux-amd64/bind_exporter
+      dest: /usr/local/bin/bind_exporter
+      mode: '0755'
+      remote_src: yes
+    when: ansible_facts.services["bind_exporter.service"] is not defined
+
+  - name: Make systemd unit
+    template: src=bind_exporter.service dest=/etc/systemd/system/bind_exporter.service
+    when: ansible_facts.services["bind_exporter.service"] is not defined
+      
+  - name: Firewall - allow port
+    community.general.ufw:
+      rule: allow
+      proto: tcp
+      direction: in
+      to_port: 9119
+    when: ansible_facts.services["node_exporter.service"] is not defined and hostvars[inventory_hostname].ansible_distribution == 'Ubuntu'
+
+  - name: Firewall - allow port CENTOS
+    firewalld:
+      port: 9119/tcp
+      permanent: true
+      state: enabled
+    when: ansible_facts.services["node_exporter.service"] is not defined and hostvars[inventory_hostname].ansible_distribution == 'CentOS'
+
+  - name: Start bind_exporter daemon
+    systemd:
+      daemon_reload: yes
+      name: bind_exporter.service
+      enabled: yes
+      state: started
+    when: ansible_facts.services["bind_exporter.service"] is not defined

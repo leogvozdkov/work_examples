@@ -1,0 +1,11 @@
+---
+
+all:
+  hosts:
+%{ for index, dns in dns_name ~}
+    ${dns}:
+      ansible_host: ${ipv4_address[index]} 
+      ansible_user: root
+      ansible_ssh_pass: "${root_password[index]}"
+      dns_name: "${dns}"
+%{ endfor ~}

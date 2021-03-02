@@ -1,0 +1,8 @@
+server {
+    listen       80;
+    server_name  {{ frontend1.address }};
+
+    location / {
+	proxy_pass {{ frontend1.local_address }};
+        } 
+    }

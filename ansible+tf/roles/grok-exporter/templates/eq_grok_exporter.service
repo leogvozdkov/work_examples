@@ -1,0 +1,15 @@
+[Unit]
+Description = Systemd unit for EQ Grok Exporter
+After = network.target remote-fs.target apiserver.service
+
+[Service]
+Type = simple
+User = root
+ExecStart = /usr/bin/grok_exporter -config /etc/grok/config/config.yml
+WorkingDirectory = /etc/grok/
+Restart = on-failure
+RestartSec = 30s
+
+[Install]
+WantedBy = multi-user.target
+

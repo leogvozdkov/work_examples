@@ -1,0 +1,68 @@
+---
+  - name: Gather facts about service
+    service_facts:
+
+  - name: Set grok exporter service state var
+    debug:
+      var: ansible_facts.services["eq_grok_exporter.service"]["status"]
+
+  - name: Install unzip
+    apt:
+      name: unzip
+    when: hostvars[inventory_hostname].ansible_distribution == 'Ubuntu'
+
+  - name: Install unzip
+    yum:
+      name: unzip
+      state: latest
+    when: hostvars[inventory_hostname].ansible_distribution == 'CentOS'
+
+  - name: Download and extract archive
+    unarchive:
+      src: https://github.com/fstab/grok_exporter/releases/download/v1.0.0.RC5/grok_exporter-1.0.0.RC5.linux-amd64.zip
+      dest: /root
+      remote_src: yes
+    when: ansible_facts.services["eq_grok_exporter.service"] is not defined
+
+  - name: Copy binary
+    copy:
+      src: /root/grok_exporter-1.0.0.RC5.linux-amd64/grok_exporter
+      dest: /usr/bin/grok_exporter
+      mode: '0755'
+      remote_src: yes
+    when: ansible_facts.services["eq_grok_exporter.service"] is not defined
+
+  - name: Copy workdir
+    copy:
+      src: ./roles/grok-exporter/templates/grok
+      dest: /etc
+    when: ansible_facts.services["eq_grok_exporter.service"] is not defined
+
+  - name: Copy systemd unit file
+    template: 
+      src=eq_grok_exporter.service
+      dest=/etc/systemd/system/eq_grok_exporter.service
+    when: ansible_facts.services["eq_grok_exporter.service"] is not defined
+
+  - name: Firewall - allow port
+    community.general.ufw:
+      rule: allow
+      proto: tcp
+      direction: in
+      to_port: 9110
+    when: ansible_facts.services["node_exporter.service"] is not defined and hostvars[inventory_hostname].ansible_distribution == 'Ubuntu'
+
+  - name: Firewall - allow port CENTOS
+    firewalld:
+      port: 9110/tcp
+      permanent: true
+      state: enabled
+    when: ansible_facts.services["node_exporter.service"] is not defined and hostvars[inventory_hostname].ansible_distribution == 'CentOS'
+
+  - name: Start systemd unit
+    systemd:
+      daemon_reload: yes
+      name: eq_grok_exporter.service
+      enabled: yes
+      state: started
+    when: ansible_facts.services["eq_grok_exporter.service"] is not defined

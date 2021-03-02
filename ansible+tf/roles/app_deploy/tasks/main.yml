@@ -1,0 +1,24 @@
+---
+
+- name: Copy files from templates
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - { src: "{{ frontend1.name }}.j2", dest: "/etc/nginx/sites-available/{{ frontend1.name }}" }
+    - { src: "{{ frontend2.name }}.j2", dest: "/etc/nginx/sites-available/{{ frontend2.name }}" }
+  notify:
+    - Reload nginx
+
+- name: Enable virtualhost
+  file:
+    src: /etc/nginx/sites-available/{{ item.name }}
+    dest: /etc/nginx/sites-enabled/{{ item.name }}
+    state: link
+  notify:
+    - Reload nginx
+  loop:
+    - {name: "{{ frontend1.name }}" }
+    - {name: "{{ frontend2.name }}" }
+
+

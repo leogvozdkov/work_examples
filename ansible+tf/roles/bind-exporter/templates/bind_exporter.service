@@ -1,0 +1,11 @@
+[Unit]
+Description = Bind Exporter service
+After = network.target
+
+[Service]
+Type = simple
+ExecStart = /usr/local/bin/bind_exporter
+Restart = on-failure
+
+[Install]
+WantedBy = multi-user.target

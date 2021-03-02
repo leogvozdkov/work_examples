@@ -1,0 +1,42 @@
+version: '3'
+networks:
+  frontend:
+    external:
+      name: {{ deployment.ext_network }}
+  plt:
+    internal: true
+services:
+  {{ deployment.service }}:
+    deploy:
+      labels:
+      {% if deployment.url -%}
+      - "traefik.enable=true"
+      - "traefik.docker.network={{ deployment.ext_network }}"
+      {% if deployment.postfix -%}
+      - "traefik.http.routers.{{ deployment.swarm_service }}.rule=Host(`{{ deployment.host }}`) && PathPrefix(`{{ deployment.postfix }}`)"
+      {% else -%}
+      - "traefik.http.routers.{{ deployment.swarm_service }}.rule=Host(`{{ deployment.host }}`)"
+      {%- endif %}
+      - "traefik.http.routers.{{ deployment.swarm_service }}.tls=true"
+      - "traefik.port=443"
+      - "traefik.http.services.{{ deployment.swarm_service }}.loadbalancer.server.port={{ deployment.port }}"
+      {%- endif %}
+      mode: replicated
+      replicas: {{ deployment.replicas }}
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 10
+        window: 180s
+    environment:
+    - PROJECT_ENV={{ deployment.project }}
+    hostname: {{ deployment.swarm_service }}
+    image: {{ deployment.image_name }}:{{deployment.version}}
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10M
+    networks:
+    - frontend
+    - plt

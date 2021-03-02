@@ -1,0 +1,50 @@
+---
+- name: NS servers
+  hosts: ns_servers
+  become: true
+  roles:
+    - bind-exporter
+
+- name: ipsec endpoints
+  hosts: ipsec_endpoints
+  become: true
+  roles:
+    - node-exporter
+    - ipsec-exporter
+
+- name: infra nodes
+  hosts: intra_nodes
+  become: true
+  roles:
+    - node-exporter
+
+- name: swarm nodes
+  hosts: swarm_nodes
+  become: true
+  roles:
+    - node-exporter
+    - cadvisor
+
+- name: unifi nodes
+  hosts: unifi_nodes
+  become: true
+  roles:
+    - unifi_exporter
+
+- name: mvp nodes
+  hosts: mvp_nodes
+  become: true
+  roles:
+    - node-exporter
+
+- name: dev swarm
+  hosts: dev-swarm
+  become: true
+  roles:
+    - node-exporter
+    - cadvisor
+
+- name: testnets
+  hosts: testnets
+  roles:
+    - node-exporter 

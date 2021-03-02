@@ -1,0 +1,11 @@
+[Unit]
+Description = Cadvisor service
+After = network.target
+
+[Service]
+Type = simple
+ExecStart = /usr/local/bin/cadvisor -log_file /var/log/cadvisor.log -port 2222 -docker_only
+Restart = on-failure
+
+[Install]
+WantedBy = multi-user.target

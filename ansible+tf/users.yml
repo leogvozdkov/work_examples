@@ -1,0 +1,10 @@
+---
+- name: Add users
+  hosts: all
+  become: true
+  vars:
+    users:
+    - username: "leo"
+      groups: "sudo"
+  roles:
+  - add-users

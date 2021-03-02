@@ -1,0 +1,13 @@
+[Unit]
+Description = Systemd unit for Prometheus Unifi Exporter
+After = network.target remote-fs.target apiserver.service
+
+[Service]
+Type = simple
+ExecStart = /usr/local/bin/unifi_exporter -unifi.addr https://localhost:8443 -unifi.username admin -unifi.password YvzVmAlriw -unifi.insecure
+Restart = on-failure
+RestartSec = 30s
+
+[Install]
+WantedBy = multi-user.target
+

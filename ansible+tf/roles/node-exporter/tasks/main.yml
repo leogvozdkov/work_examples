@@ -1,0 +1,59 @@
+---
+  - name: Gather facts about service
+    service_facts:
+
+  - name: Set node exporter service state var
+    debug:
+      var: ansible_facts.services["node_exporter.service"]["status"]
+
+  - name: Download and extract archive
+    unarchive:
+      src: https://github.com/prometheus/node_exporter/releases/download/v1.0.1/node_exporter-1.0.1.linux-amd64.tar.gz
+      dest: /root
+      remote_src: yes
+    when: ansible_facts.services["node_exporter.service"] is not defined
+
+  - name: Add node_exporter user
+    user:
+      name: node_exporter
+      shell: /sbin/nologin
+      state: present
+    when: ansible_facts.services["node_exporter.service"] is not defined
+
+  - name: Copy binary
+    copy:
+      src: /root/node_exporter-1.0.1.linux-amd64/node_exporter
+      dest: /usr/local/bin/node_exporter
+      remote_src: yes
+      mode: '0755'
+      owner: node_exporter
+      group: node_exporter
+    when: ansible_facts.services["node_exporter.service"] is not defined
+
+  - name: Make systemd unit
+    template: src=node_exporter.service dest=/etc/systemd/system/node_exporter.service
+    when: ansible_facts.services["node_exporter.service"] is not defined
+      
+  - name: Firewall - allow port UBUNTU
+    community.general.ufw:
+      rule: allow
+      proto: tcp
+      direction: in
+      to_port: 9100
+    when: ansible_facts.services["node_exporter.service"] is not defined and hostvars[inventory_hostname].ansible_distribution == 'Ubuntu'
+
+  - name: Firewall - allow port CENTOS
+    firewalld:
+      port: 9100/tcp
+      permanent: true
+      state: enabled
+    when: ansible_facts.services["node_exporter.service"] is not defined and hostvars[inventory_hostname].ansible_distribution == 'CentOS'
+
+
+  - name: Start node exporter daemon
+    systemd:
+      daemon_reload: yes
+      name: node_exporter.service
+      enabled: yes
+      state: started
+    when: ansible_facts.services["node_exporter.service"] is not defined

@@ -1,0 +1,6 @@
+---
+- name: app deployment
+  hosts: all
+  roles:
+    - nginx_install
+    - app_deploy

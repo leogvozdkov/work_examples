@@ -1,0 +1,41 @@
+---
+  - name: Gather facts about service
+    service_facts:
+
+  - name: Set cadvisor  service state var
+    debug:
+      var: ansible_facts.services["cadvisor.service"]["status"]
+
+  - name: Copy binary
+    get_url:
+      url: https://github.com/google/cadvisor/releases/download/v0.37.0/cadvisor
+      dest: /usr/local/bin/cadvisor
+      mode: '0755'
+    when: ansible_facts.services["cadvisor.service"] is not defined
+
+  - name: Make systemd unit
+    template: src=cadvisor.service dest=/etc/systemd/system/cadvisor.service
+    when: ansible_facts.services["cadvisor.service"] is not defined
+      
+  - name: Firewall - allow port
+    community.general.ufw:
+      rule: allow
+      proto: tcp
+      direction: in
+      to_port: 2222
+    when: ansible_facts.services["node_exporter.service"] is not defined and hostvars[inventory_hostname].ansible_distribution == 'Ubuntu'
+
+  - name: Firewall - allow port CENTOS
+    firewalld:
+      port: 2222/tcp
+      permanent: true
+      state: enabled
+    when: ansible_facts.services["node_exporter.service"] is not defined and hostvars[inventory_hostname].ansible_distribution == 'CentOS'
+
+  - name: Start cadvisor daemon
+    systemd:
+      daemon_reload: yes
+      name: cadvisor.service
+      enabled: yes
+      state: started
+    when: ansible_facts.services["cadvisor.service"] is not defined

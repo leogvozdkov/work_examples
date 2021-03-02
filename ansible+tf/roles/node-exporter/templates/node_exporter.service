@@ -1,0 +1,15 @@
+[Unit]
+Description = Systemd unit for Prometheus Node Exporter
+After = network.target remote-fs.target apiserver.service
+
+[Service]
+Type = simple
+User = node_exporter
+ExecStart = /usr/local/bin/node_exporter --web.listen-address=':9100' --web.telemetry-path=/metrics --log.level=info --collector.filesystem.ignored-mount-points='^/(sys|proc|dev|host|etc|var/lib/docker|run|var/lib/lxcfs|var/lib/kubelet)($|/)' --collector.diskstats --collector.filefd --collector.filesystem --collector.loadavg --collector.meminfo --collector.netdev --collector.netstat --collector.sockstat --collector.stat --collector.tcpstat --collector.textfile --collector.time --collector.uname --collector.systemd
+WorkingDirectory = /
+Restart = on-failure
+RestartSec = 30s
+
+[Install]
+WantedBy = multi-user.target
+
