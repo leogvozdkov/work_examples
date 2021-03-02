@@ -1,4 +1,0 @@
----    
-nginx_conf:
-  sendfile: "on"
-  keepalive_timeout: 120
